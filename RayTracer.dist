@@ -2,8 +2,8 @@
 # http://www.openengine.dk/wiki/Projects/RayTracer
 
 # main repository
-darcs / http://openengine.dk/code/openengine
-darcs-dev / fh.daimi.au.dk:/users/cgd/code/openengine
+darcs / http://openengine.dk/code/branches/thread
+darcs-dev / fh.daimi.au.dk:/users/cgd/code/branches/thread
 
 # project repository
 # (uncomment the following two lines after uploading your project)
@@ -26,7 +26,9 @@ darcs /extensions/AccelerationStructures http://openengine.dk/code/extensions/Ac
 darcs-dev /extensions/SetupHelpers           fh.daimi.au.dk:/users/cgd/code/extensions/SetupHelpers
 darcs-dev /extensions/HUD                    fh.daimi.au.dk:/users/cgd/code/extensions/HUD
 darcs-dev /extensions/SDL                    fh.daimi.au.dk:/users/cgd/code/extensions/SDL
+darcs-dev /extensions/TinyScheme             fh.daimi.au.dk:/users/cgd/code/extensions/TinyScheme
 darcs-dev /extensions/SDLImage               fh.daimi.au.dk:/users/cgd/code/extensions/SDLImage
+darcs-dev /extensions/FaceBuilder            fh.daimi.au.dk:/users/cgd/code/extensions/FaceBuilder
 darcs-dev /extensions/CairoResource          fh.daimi.au.dk:/users/cgd/code/extensions/CairoResource
 darcs-dev /extensions/OpenGLRenderer         fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
 darcs-dev /extensions/TGAResource            fh.daimi.au.dk:/users/cgd/code/extensions/TGAResource
