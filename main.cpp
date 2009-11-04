@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
 
 
     
-
+    
 
     PointLightNode *pln = new PointLightNode();
     TransformationNode *lightTn = new TransformationNode();
