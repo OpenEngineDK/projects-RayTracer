@@ -8,9 +8,23 @@
 class RayTracer;
 typedef boost::shared_ptr<RayTracer> RayTracerPtr;
 
-class RayTracer : public OpenEngine::Resources::ITextureResource {
+using namespace OpenEngine;
+
+class RayTracer : public Resources::ITextureResource {
+
+    int _id;
 public:
     static RayTracerPtr Create();
+
+    void Load();
+    void Unload();
+    int GetID() {return _id;}
+    void SetID(int id) {_id = id;}
+    unsigned int GetWidth() {return 100;}
+    unsigned int GetHeight() {return 100;}
+    unsigned int GetDepth() {return 4;}
+    unsigned char* GetData();
+    Resources::ColorFormat GetColorFormat() {}
 
 };
 

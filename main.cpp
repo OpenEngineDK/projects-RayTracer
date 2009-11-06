@@ -27,6 +27,8 @@
 // Game factory
 //#include "GameFactory.h"
 
+#include "RayTracer.h"
+
 // name spaces that we will be using.
 // this combined with the above imports is almost the same as
 // fx. import OpenEngine.Logging.*; in Java.
@@ -121,6 +123,12 @@ int main(int argc, char** argv) {
     cam->SetPosition(Vector<3,float>(100,100,-100));
     cam->LookAt(Vector<3,float>(0,0,0));
     
+
+
+    RayTracerPtr rt = RayTracer::Create();
+    HUD::Surface *rtHud = setup->GetHUD().CreateSurface(rt);
+    rtHud->SetPosition(HUD::Surface::LEFT,
+                       HUD::Surface::TOP);
 
 
 

@@ -7,6 +7,10 @@ darcs-dev / fh.daimi.au.dk:/users/cgd/code/branches/thread
 
 # project repository
 # (uncomment the following two lines after uploading your project)
+
+darcs /projects/RayTracer poseidon:repos/RayTracer
+darcs-dev /projects/RayTracer poseidon:repos/RayTracer
+
 #darcs /projects/RayTracer http://openengine.dk/code/projects/RayTracer
 #darcs-dev /projects/RayTracer fh.daimi.au.dk:/users/cgd/code/projects/RayTracer
 
