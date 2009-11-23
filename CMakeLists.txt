@@ -33,4 +33,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   Extensions_SetupHelpers  
   Extensions_FaceBuilder
   Extensions_TinyScheme
+  Extensions_RayTracing
+  Extensions_Qt
 )
