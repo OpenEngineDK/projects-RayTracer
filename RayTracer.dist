@@ -8,11 +8,8 @@ darcs-dev / fh.daimi.au.dk:/users/cgd/code/branches/thread
 # project repository
 # (uncomment the following two lines after uploading your project)
 
-darcs /projects/RayTracer poseidon:repos/RayTracer
-darcs-dev /projects/RayTracer poseidon:repos/RayTracer
-
-#darcs /projects/RayTracer http://openengine.dk/code/projects/RayTracer
-#darcs-dev /projects/RayTracer fh.daimi.au.dk:/users/cgd/code/projects/RayTracer
+darcs /projects/RayTracer http://openengine.dk/code/projects/RayTracer
+darcs-dev /projects/RayTracer fh.daimi.au.dk:/users/cgd/code/projects/RayTracer
 
 # required extensions
 darcs /extensions/SetupHelpers           http://openengine.dk/code/extensions/SetupHelpers
@@ -21,6 +18,7 @@ darcs /extensions/SDL                    http://openengine.dk/code/extensions/SD
 darcs /extensions/TinyScheme             http://openengine.dk/code/extensions/TinyScheme
 darcs /extensions/SDLImage               http://openengine.dk/code/extensions/SDLImage
 darcs /extensions/FaceBuilder            http://openengine.dk/code/extensions/FaceBuilder
+darcs /extensions/RayTracing             http://openengine.dk/code/extensions/RayTracing
 darcs /extensions/CairoResource          http://openengine.dk/code/extensions/CairoResource
 darcs /extensions/OpenGLRenderer         http://openengine.dk/code/extensions/OpenGLRenderer
 darcs /extensions/TGAResource            http://openengine.dk/code/extensions/TGAResource
@@ -34,6 +32,7 @@ darcs-dev /extensions/SDL                    fh.daimi.au.dk:/users/cgd/code/exte
 darcs-dev /extensions/TinyScheme             fh.daimi.au.dk:/users/cgd/code/extensions/TinyScheme
 darcs-dev /extensions/SDLImage               fh.daimi.au.dk:/users/cgd/code/extensions/SDLImage
 darcs-dev /extensions/FaceBuilder            fh.daimi.au.dk:/users/cgd/code/extensions/FaceBuilder
+darcs /extensions/RayTracing                 fh.daimi.au.dk:/users/cgd/code/extensions/RayTracing
 darcs-dev /extensions/CairoResource          fh.daimi.au.dk:/users/cgd/code/extensions/CairoResource
 darcs-dev /extensions/OpenGLRenderer         fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
 darcs-dev /extensions/TGAResource            fh.daimi.au.dk:/users/cgd/code/extensions/TGAResource
