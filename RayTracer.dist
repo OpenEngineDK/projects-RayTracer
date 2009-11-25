@@ -34,7 +34,7 @@ darcs-dev /extensions/SDL                    fh.daimi.au.dk:/users/cgd/code/exte
 darcs-dev /extensions/TinyScheme             fh.daimi.au.dk:/users/cgd/code/extensions/TinyScheme
 darcs-dev /extensions/SDLImage               fh.daimi.au.dk:/users/cgd/code/extensions/SDLImage
 darcs-dev /extensions/FaceBuilder            fh.daimi.au.dk:/users/cgd/code/extensions/FaceBuilder
-darcs /extensions/RayTracing                 fh.daimi.au.dk:/users/cgd/code/extensions/RayTracing
+darcs-dev /extensions/RayTracing             fh.daimi.au.dk:/users/cgd/code/extensions/RayTracing
 darcs-dev /extensions/CairoResource          fh.daimi.au.dk:/users/cgd/code/extensions/CairoResource
 darcs-dev /extensions/OpenGLRenderer         fh.daimi.au.dk:/users/cgd/code/extensions/OpenGLRenderer
 darcs-dev /extensions/TGAResource            fh.daimi.au.dk:/users/cgd/code/extensions/TGAResource
