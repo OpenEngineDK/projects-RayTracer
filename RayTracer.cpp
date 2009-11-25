@@ -31,12 +31,57 @@ RayTracer::RayTracer(EmptyTextureResourcePtr tex, ISceneNode* root) : texture(te
 
     timer.Start();
 
+    markX = 180;
+    markY = 15;
+
     rnode = new RayTracerRenderNode(this);
 }
 
 void RayTracer::RayTracerRenderNode::Apply(IRenderingView *rv) {
+    IRenderer* rend = rv->GetRenderer();
+
     // draw the cam
-    rv->GetRenderer()->DrawPoint(rt->camPos, Vector<3,float>(0,0,1), 10);
+    rend->DrawPoint(rt->camPos, Vector<3,float>(0,0,1), 10);
+
+    // Draw a ray
+
+    int u,v;
+
+    u = rt->markX;
+    v = rt->markY;
+
+    Ray r = rt->RayForPoint(u,v);
+    Vector<3,float> p;
+    Shape *nearestObj = rt->NearestShape(r, p);
+    
+    int i=0;
+
+    Vector<3,float> colors[5];
+    colors[0] = Vector<3,float>(1,0,0);
+    colors[1] = Vector<3,float>(0,1,0);
+    colors[2] = Vector<3,float>(0,0,1);
+    colors[3] = Vector<3,float>(1,1,0);
+    colors[4] = Vector<3,float>(0,1,1);
+
+    Line l(r.origin, p);
+        rend->DrawLine(l,colors[i++%5],3);
+
+    while (nearestObj) {               
+    
+        // second ray
+        Ray reflectionRay;
+        reflectionRay.origin = p;
+            
+        Vector<3,float> normal = nearestObj->NormalAt(p);
+        Vector<3,float> d = r.direction;
+            
+        reflectionRay.direction = d - 2 * (normal * d ) * normal;
+     
+        nearestObj = rt->NearestShape(reflectionRay, p);
+        if (nearestObj)
+            rend->DrawLine(Line(reflectionRay.origin, p),colors[i++%5],3);
+                  
+    }
 }
 
 
@@ -47,7 +92,9 @@ void RayTracer::VisitShapeNode(ShapeNode* node) {
 }
 
 void RayTracer::Handle(ProcessEventArg arg) {
+
     if (dirty && timer.GetElapsedIntervals(100000)) {
+        
         timer.Reset();
         texture->RebindTexture();
         dirty = false;
@@ -85,17 +132,13 @@ For each pixel in image {
 
 */
 
-Vector<4,float> RayTracer::TraceRay(Ray r, int depth) {
-    if (depth > maxDepth)
-        return Vector<4,float>();
+Shape* RayTracer::NearestShape(Ray r, Vector<3,float>& point) {
 
     float nearestT = 10000000000000000;
     Shape *nearestObj = 0;
     Vector<3,float> nearestPoint;
 
 
-            
-    // Intersect all objects
     for (vector<Object>::iterator itr = objects.begin();
          itr != objects.end();
          itr++) {
@@ -114,6 +157,27 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth) {
             }                    
         }
     }
+    if (nearestObj) {
+        point = nearestPoint;
+        return nearestObj;
+    }
+    return 0;
+}
+
+
+Vector<4,float> RayTracer::TraceRay(Ray r, int depth) {
+    if (depth > maxDepth)
+        return Vector<4,float>();
+
+    Shape *nearestObj = 0;
+    Vector<3,float> nearestPoint;
+
+
+            
+    // Intersect all objects
+
+    nearestObj = NearestShape(r,nearestPoint);
+
     if (!nearestObj)
         return Vector<4,float>(0,0,0,1);
 
@@ -187,7 +251,7 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth) {
     
 
     Vector<4,float> recurseColor = TraceRay(reflectionRay,depth+1);    
-    float reflection = 0.5;
+    float reflection = 0.9;
 
 
     color += recurseColor * reflection; 
@@ -202,6 +266,24 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth) {
     //color.Normalize();
 
     return color;
+}
+
+Ray RayTracer::RayForPoint(int u, int v) {
+
+    float x = ((2*u - width) / width) * tan(fovX);
+    float y = ((2*v - height) / height) * tan(fovY);
+            
+    Vector<3,float> p;
+    p[0] = x;
+    p[1] = y;
+    p[2] = -1;
+
+    Ray r;
+    r.origin = camPos;
+    r.direction = (p - camPos).GetNormalize();
+    
+    return r;
+
 }
 
 void RayTracer::Trace() {
@@ -224,33 +306,27 @@ void RayTracer::Trace() {
 
 
             // Create ray from eyepoint passing throuth this pixel
-            
-            float x = ((2*u - width) / width) * tan(fovX);
-            float y = ((2*v - height) / height) * tan(fovY);
-            
-            Vector<3,float> p;
-            p[0] = x;
-            p[1] = y;
-            p[2] = -1;
 
-            Ray r;
-            r.origin = camPos;
-            r.direction = (p - camPos).GetNormalize();
-            
+
+            Ray r = RayForPoint(u,v);
+        
             //logger.info << "Ray: " << r << logger.end;
-            
-
+    
             Vector<4,float> col = TraceRay(r,0);
-
-
 
             (*texture)(u,v,0) = col[0]*255;
             (*texture)(u,v,1) = col[1]*255;
             (*texture)(u,v,2) = col[2]*255;
-            (*texture)(u,v,3) = col[3]*255;
+            //(*texture)(u,v,3) = col[3]*255;
             
             //logger.info << "color " << col << logger.end;
             //Thread::Sleep(50000);
+
+            if (markX == u && markY == v) {
+                (*texture)(u,v,0) = -1;
+                (*texture)(u,v,1) = 0;
+                (*texture)(u,v,2) = 0;
+            }
 
             dirty = true;
         }

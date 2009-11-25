@@ -49,6 +49,7 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
         Shape *shape;
     };
 
+
     vector<Light> lights;
     vector<Object> objects;
 
@@ -65,6 +66,10 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
     int traceNum;
     bool dirty;
 
+    Shape* NearestShape(Ray r, Vector<3,float>& p);
+
+    Ray RayForPoint(int u, int v);
+
     Vector<4,float> TraceRay(Ray r, int depth);
     void Trace();
     Timer timer;
@@ -74,6 +79,10 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
 
 public:
     bool run;
+
+    unsigned int markX;
+    unsigned int markY;
+
 
     
     RayTracer(EmptyTextureResourcePtr tex, ISceneNode* root);

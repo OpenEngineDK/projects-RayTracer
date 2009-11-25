@@ -78,6 +78,18 @@ public:
     }
 };
 
+class RTHandler : public IListener<KeyboardEventArg> {
+    RayTracer& rt;
+public:
+    RTHandler(RayTracer& rt) : rt(rt) {}
+    void Handle(KeyboardEventArg arg) {
+        if (arg.sym == KEY_LEFT) {
+            rt.markX--;
+        }
+    }
+};
+
+
 
 //static TransformationNode* CreateTextureBillboard(ITextureResourcePtr texture,
 //						  float scale) {
@@ -167,7 +179,7 @@ public:
             float radius = sphere->radius;
             Vector<4,float> color = Vector<4,float>(1,0,0,1);
                         
-            logger.info << "  hesten" << logger.end;
+            //logger.info << "  hesten" << logger.end;
 
 
                                     
@@ -513,7 +525,7 @@ void SetupRendering(Config& config) {
 
     
     config.hud = new HUD();
-    //config.renderer->PostProcessEvent().Attach(*config.hud);
+    config.renderer->PostProcessEvent().Attach(*config.hud);
     
     // mouse selector stuff
     //SelectionSet<ISceneNode>* ss = new SelectionSet<ISceneNode>();
@@ -540,8 +552,8 @@ void SetupRendering(Config& config) {
 
     // bottom right
     Camera* cam_br = new Camera(*(new ViewingVolume()));
-    cam_br->SetPosition(Vector<3,float>(0,0,dist));
-    cam_br->LookAt(0,0,0);
+    cam_br->SetPosition(Vector<3,float>(20,0,20));
+    cam_br->LookAt(0,0,-80);
     Viewport* vp_br = new Viewport(width/2, 0, width,height/2);
     vp_br->SetViewingVolume(cam_br);
     OpenGL::RenderingView* rv_br = new RTRenderingView(*vp_br);
@@ -647,5 +659,9 @@ void SetupRayTracer(Config& config) {
     
     config.engine.ProcessEvent().Attach(*config.rt);
     
+
+    RTHandler* rt_h = new RTHandler(*config.rt);
+    config.keyboard->KeyEvent().Attach(*rt_h);
+
 
 }
