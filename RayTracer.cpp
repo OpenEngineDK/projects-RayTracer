@@ -30,6 +30,13 @@ RayTracer::RayTracer(EmptyTextureResourcePtr tex, ISceneNode* root) : texture(te
     maxDepth = 1;
 
     timer.Start();
+
+    rnode = new RayTracerRenderNode(this);
+}
+
+void RayTracer::RayTracerRenderNode::Apply(IRenderingView *rv) {
+    // draw the cam
+    rv->GetRenderer()->DrawPoint(rt->camPos, Vector<3,float>(0,0,1), 10);
 }
 
 
@@ -156,7 +163,7 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth) {
             float diff = (norm * shaddowRay.direction);
             
             if (diff > 0)
-                color += l.color * diff * nearestObj->diffuse;
+                color += l.color * diff * nearestObj->mat->diffuse;
 
             //color = l.color;
         }
@@ -175,8 +182,8 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth) {
 
     reflectionRay.direction = d - 2 * (normal * d ) * normal;
 
-    logger.info << "normal " << normal << logger.end;
-    logger.info << "reflection " << reflectionRay << logger.end;
+    //logger.info << "normal " << normal << logger.end;
+    //logger.info << "reflection " << reflectionRay << logger.end;
     
 
     Vector<4,float> recurseColor = TraceRay(reflectionRay,depth+1);    
@@ -198,7 +205,6 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth) {
 }
 
 void RayTracer::Trace() {
-
     Timer t;
     t.Reset();
     t.Start();
@@ -267,4 +273,8 @@ void RayTracer::Run() {
         Thread::Sleep(1000000);
     }
 
+}
+
+RenderNode* RayTracer::GetRayTracerDebugNode() {
+    return rnode;
 }

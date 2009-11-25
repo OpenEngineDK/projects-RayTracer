@@ -15,11 +15,13 @@ darcs-dev /projects/RayTracer fh.daimi.au.dk:/users/cgd/code/projects/RayTracer
 darcs /extensions/SetupHelpers           http://openengine.dk/code/extensions/SetupHelpers
 darcs /extensions/HUD                    http://openengine.dk/code/extensions/HUD
 darcs /extensions/SDL                    http://openengine.dk/code/extensions/SDL
+darcs /extensions/SDLFont                    http://openengine.dk/code/extensions/SDLFont
 darcs /extensions/TinyScheme             http://openengine.dk/code/extensions/TinyScheme
 darcs /extensions/SDLImage               http://openengine.dk/code/extensions/SDLImage
 darcs /extensions/FaceBuilder            http://openengine.dk/code/extensions/FaceBuilder
 darcs /extensions/RayTracing             http://openengine.dk/code/extensions/RayTracing
 darcs /extensions/CairoResource          http://openengine.dk/code/extensions/CairoResource
+darcs /extensions/OpenGLSelection http://openengine.dk/code/extensions/OpenGLSelection
 darcs /extensions/OpenGLRenderer         http://openengine.dk/code/extensions/OpenGLRenderer
 darcs /extensions/TGAResource            http://openengine.dk/code/extensions/TGAResource
 darcs /extensions/Qt                     http://openengine.dk/code/extensions/Qt

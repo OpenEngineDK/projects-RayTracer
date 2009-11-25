@@ -9,12 +9,16 @@
 #include <vector>
 #include <Shapes/Shape.h>
 #include <Scene/ISceneNodeVisitor.h>
+#include <Scene/RenderNode.h>
 #include <Utils/Timer.h>
+#include <Renderers/IRenderingView.h>
+
 
 #include "EmptyTextureResource.h"
 
 using namespace OpenEngine;
 using namespace OpenEngine::Resources;
+using namespace OpenEngine::Renderers;
 using namespace OpenEngine::Core;
 using namespace OpenEngine::Math;
 using namespace OpenEngine::Utils;
@@ -23,9 +27,19 @@ using namespace OpenEngine::Scene;
 using namespace std;
 
 
+
 class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISceneNodeVisitor {
 
-    
+    class RayTracerRenderNode : public RenderNode {
+        RayTracer* rt;
+    public:
+        RayTracerRenderNode(RayTracer* rt) : rt(rt) {}
+
+        virtual void Apply(IRenderingView *renderingView);
+    };
+
+    RayTracerRenderNode *rnode;
+
     struct Light {
         Vector<3,float> pos;
         Vector<4,float> color;
@@ -68,6 +82,8 @@ public:
     void Handle(ProcessEventArg arg);
 
     void VisitShapeNode(ShapeNode* node);
+
+    RenderNode* GetRayTracerDebugNode();
 };
 
 #endif

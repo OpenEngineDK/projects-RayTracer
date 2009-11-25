@@ -35,4 +35,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   Extensions_TinyScheme
   Extensions_RayTracing
   Extensions_Qt
+  Extensions_OpenGLSelection
+  Extensions_SDLFont
 )

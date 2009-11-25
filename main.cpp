@@ -14,8 +14,9 @@
 #include <Logging/StreamLogger.h>
 #include <Core/Engine.h>
 
-// SimpleSetup
-#include <Utils/SimpleSetup.h>
+#include <Display/Camera.h>
+#include <Display/Frustum.h>
+
 #include <Geometry/FaceBuilder.h>
 #include <Scene/GeometryNode.h>
 #include <Scene/RenderStateNode.h>
@@ -25,18 +26,31 @@
 #include <Script/Scheme.h>
 #include <Script/ScriptBridge.h>
 
+#include "RayTracer.h"
+
 #include <Renderers/TextureLoader.h>
 #include <Display/QtEnvironment.h>
+#include <Display/SDLEnvironment.h>
 #include <Display/Viewport.h>
+#include <Display/HUD.h>
+#include <Display/Viewingvolume.h>
+#include <Renderers/OpenGL/Renderer.h>
 #include <Renderers/OpenGL/RenderingView.h>
+
 #include <Scene/ShapeNode.h>
+#include <Scene/SceneNode.h>
 #include <Shapes/Sphere.h>
 #include <Shapes/Plane.h>
+
+#include <Utils/CameraTool.h>
+#include <Utils/ToolChain.h>
+#include <Utils/MouseSelection.h>
+
 
 // Game factory
 //#include "GameFactory.h"
 
-#include "RayTracer.h"
+
 #include "EmptyTextureResource.h"
     
 
@@ -54,62 +68,73 @@ using namespace OpenEngine::Renderers;
 using namespace OpenEngine::Renderers::OpenGL;
 using namespace OpenEngine::Shapes;
 
-static TransformationNode* CreateTextureBillboard(ITextureResourcePtr texture,
-						  float scale) {
-  unsigned int textureHosisontalSize = texture->GetWidth();
-  unsigned int textureVerticalSize = texture->GetHeight();
 
-  logger.info << "w x h = " << texture->GetWidth()
-	      << " x " << texture->GetHeight() << logger.end;
-  float fullxtexcoord = 1;
-  float fullytexcoord = 1;
-  
-  FaceSet* faces = new FaceSet();
+class QuitHandler : public IListener<KeyboardEventArg> {
+    IEngine& engine;
+public:
+    QuitHandler(IEngine& engine) : engine(engine) {}
+    void Handle(KeyboardEventArg arg) {
+        if (arg.sym == KEY_ESCAPE) engine.Stop();
+    }
+};
 
-  float horisontalhalfsize = textureHosisontalSize * 0.5;
-  Vector<3,float>* lowerleft = new Vector<3,float>(horisontalhalfsize,0,0);
-  Vector<3,float>* lowerright = new Vector<3,float>(-horisontalhalfsize,0,0);
-  Vector<3,float>* upperleft = new Vector<3,float>(horisontalhalfsize,textureVerticalSize,0);
-  Vector<3,float>* upperright = new Vector<3,float>(-horisontalhalfsize,textureVerticalSize,0);
 
-  FacePtr leftside = FacePtr(new Face(*lowerleft,*lowerright,*upperleft));
-
-        /*
-          leftside->texc[1] = Vector<2,float>(1,0);
-          leftside->texc[0] = Vector<2,float>(0,0);
-          leftside->texc[2] = Vector<2,float>(0,1);
-        */
-  leftside->texc[1] = Vector<2,float>(0,fullytexcoord);
-  leftside->texc[0] = Vector<2,float>(fullxtexcoord,fullytexcoord);
-  leftside->texc[2] = Vector<2,float>(fullxtexcoord,0);
-  leftside->norm[0] = leftside->norm[1] = leftside->norm[2] = Vector<3,float>(0,0,1);
-  leftside->CalcHardNorm();
-  leftside->Scale(scale);
-  faces->Add(leftside);
-
-  FacePtr rightside = FacePtr(new Face(*lowerright,*upperright,*upperleft));
-        /*
-          rightside->texc[2] = Vector<2,float>(0,1);
-          rightside->texc[1] = Vector<2,float>(1,1);
-          rightside->texc[0] = Vector<2,float>(1,0);
-        */
-  rightside->texc[2] = Vector<2,float>(fullxtexcoord,0);
-  rightside->texc[1] = Vector<2,float>(0,0);
-  rightside->texc[0] = Vector<2,float>(0,fullytexcoord);
-  rightside->norm[0] = rightside->norm[1] = rightside->norm[2] = Vector<3,float>(0,0,1);
-  rightside->CalcHardNorm();
-  rightside->Scale(scale);
-  faces->Add(rightside);
-
-  MaterialPtr m = leftside->mat = rightside->mat = MaterialPtr(new Material());
-  m->texr = texture;
-
-  GeometryNode* node = new GeometryNode();
-  node->SetFaceSet(faces);
-  TransformationNode* tnode = new TransformationNode();
-  tnode->AddNode(node);
-  return tnode;
-}
+//static TransformationNode* CreateTextureBillboard(ITextureResourcePtr texture,
+//						  float scale) {
+//  unsigned int textureHosisontalSize = texture->GetWidth();
+//  unsigned int textureVerticalSize = texture->GetHeight();
+//
+//  logger.info << "w x h = " << texture->GetWidth()
+//	      << " x " << texture->GetHeight() << logger.end;
+//  float fullxtexcoord = 1;
+//  float fullytexcoord = 1;
+//  
+//  FaceSet* faces = new FaceSet();
+//
+//  float horisontalhalfsize = textureHosisontalSize * 0.5;
+//  Vector<3,float>* lowerleft = new Vector<3,float>(horisontalhalfsize,0,0);
+//  Vector<3,float>* lowerright = new Vector<3,float>(-horisontalhalfsize,0,0);
+//  Vector<3,float>* upperleft = new Vector<3,float>(horisontalhalfsize,textureVerticalSize,0);
+//  Vector<3,float>* upperright = new Vector<3,float>(-horisontalhalfsize,textureVerticalSize,0);
+//
+//  FacePtr leftside = FacePtr(new Face(*lowerleft,*lowerright,*upperleft));
+//
+//        /*
+//          leftside->texc[1] = Vector<2,float>(1,0);
+//          leftside->texc[0] = Vector<2,float>(0,0);
+//          leftside->texc[2] = Vector<2,float>(0,1);
+//        */
+//  leftside->texc[1] = Vector<2,float>(0,fullytexcoord);
+//  leftside->texc[0] = Vector<2,float>(fullxtexcoord,fullytexcoord);
+//  leftside->texc[2] = Vector<2,float>(fullxtexcoord,0);
+//  leftside->norm[0] = leftside->norm[1] = leftside->norm[2] = Vector<3,float>(0,0,1);
+//  leftside->CalcHardNorm();
+//  leftside->Scale(scale);
+//  faces->Add(leftside);
+//
+//  FacePtr rightside = FacePtr(new Face(*lowerright,*upperright,*upperleft));
+//        /*
+//          rightside->texc[2] = Vector<2,float>(0,1);
+//          rightside->texc[1] = Vector<2,float>(1,1);
+//          rightside->texc[0] = Vector<2,float>(1,0);
+//        */
+//  rightside->texc[2] = Vector<2,float>(fullxtexcoord,0);
+//  rightside->texc[1] = Vector<2,float>(0,0);
+//  rightside->texc[0] = Vector<2,float>(0,fullytexcoord);
+//  rightside->norm[0] = rightside->norm[1] = rightside->norm[2] = Vector<3,float>(0,0,1);
+//  rightside->CalcHardNorm();
+//  rightside->Scale(scale);
+//  faces->Add(rightside);
+//
+//  MaterialPtr m = leftside->mat = rightside->mat = MaterialPtr(new Material());
+//  m->texr = texture;
+//
+//  GeometryNode* node = new GeometryNode();
+//  node->SetFaceSet(faces);
+//  TransformationNode* tnode = new TransformationNode();
+//  tnode->AddNode(node);
+//  return tnode;
+//}
 
 
 /**
@@ -132,7 +157,38 @@ public:
         Shapes::Plane *plane = dynamic_cast<Shapes::Plane*>(shape);
         
         if (sphere) {
-            renderer->DrawSphere(sphere->center, sphere->radius, Vector<3,float>(1,0,0));
+
+            glEnable(GL_LIGHTING);
+            glEnable(GL_COLOR_MATERIAL);
+            
+            RenderingView::ApplyMaterial(sphere->mat);
+            
+            Vector<3,float> center = sphere->center;
+            float radius = sphere->radius;
+            Vector<4,float> color = Vector<4,float>(1,0,0,1);
+                        
+            logger.info << "  hesten" << logger.end;
+
+
+                                    
+            CHECK_FOR_GL_ERROR();
+            
+            glPushMatrix();
+            glTranslatef(center[0], center[1], center[2]);
+            glColor3f(color[0], color[1], color[2]);
+            GLUquadricObj* qobj = gluNewQuadric();
+            glLineWidth(1);
+            gluQuadricNormals(qobj, GLU_SMOOTH);
+            gluQuadricDrawStyle(qobj, GLU_FILL);
+            gluQuadricOrientation(qobj, GLU_INSIDE);
+            gluSphere(qobj, radius, 20, 20); 
+            gluDeleteQuadric(qobj);
+            glPopMatrix();
+            
+            // reset state
+                        
+            CHECK_FOR_GL_ERROR();
+            
         } 
         else if (plane) {
                 // draw a thicker line in origin
@@ -167,13 +223,98 @@ public:
     }
 };
 
+struct Config {
+    IEngine&                engine;
+    IFrame*                 frame;
+    Viewport*               viewport;
+    IViewingVolume*         viewingvolume;
+    Camera*                 camera;
+    Frustum*                frustum;
+    IRenderer*              renderer;
+    IMouse*                 mouse;
+    IKeyboard*              keyboard;
+    ISceneNode*             scene;
+    MouseSelection*         ms;
+    RayTracer*              rt;
+    HUD*                    hud;
+    EmptyTextureResourcePtr traceTex;
+    
+    
+
+    OpenEngine::Renderers::TextureLoader* textureLoader;
+
+    Config(IEngine& engine)
+        : engine(engine)
+        , frame(NULL)
+        , viewport(NULL)
+        , viewingvolume(NULL)
+        , camera(NULL)
+        , frustum(NULL)
+        , renderer(NULL)
+        , mouse(NULL)
+        , keyboard(NULL)
+        , scene(NULL)        
+        , ms(NULL)
+        , rt(NULL)
+        , hud(NULL)
+    //, traceTex(0)
+        , textureLoader(NULL)
+    {}
+};
+
+// Forward declaration of the setup methods
+void SetupResources(Config&);
+void SetupDevices(Config&);
+void SetupDisplay(Config&);
+void SetupRendering(Config&);
+void SetupScene(Config&);
+void SetupDebugging(Config&);
+void SetupRayTracer(Config&);
+
 
 int main(int argc, char** argv) {
     // Setup logging facilities.
-    //Logger::AddLogger(new StreamLogger(&std::cout));
+    Logger::AddLogger(new StreamLogger(&std::cout));
 
     // Print usage info.
-    //logger.info << "========= Running OpenEngine Test Project =========" << logger.end;
+    logger.info << "========= Running OpenEngine Test Project =========" << logger.end;
+
+
+
+
+    Engine *engine = new Engine();
+    Config config(*engine);
+
+    // Setup the engine
+    SetupResources(config);
+    SetupDisplay(config);
+    SetupDevices(config);
+    SetupRendering(config);
+    SetupScene(config);
+    SetupRayTracer(config);    
+
+    // Possibly add some debugging stuff
+    SetupDebugging(config);
+
+    config.rt->Start();
+    
+    // Start up the engine.
+    engine->Start();
+    
+    config.rt->run = false;
+    config.rt->Wait();
+
+    // release event system
+    // post condition: scene and modules are not processed
+    delete engine;
+
+    delete config.scene;
+
+    // Return when the engine stops.
+    return EXIT_SUCCESS;
+}
+/*
+
 
     // Create simple setup
     QtEnvironment* env = new QtEnvironment(true,1024,768);
@@ -265,6 +406,8 @@ int main(int argc, char** argv) {
     //traceTexNode->Rotate(0,180,0);
     //root->AddNode(traceTexNode);
 
+    root->AddNode(rt->GetRayTracerDebugNode());
+
     // add ray trace hud.
     // RayTracerPtr rt = RayTracer::Create();
     // setup->GetTextureLoader().Load(rt, TextureLoader::RELOAD_QUEUED);
@@ -284,5 +427,225 @@ int main(int argc, char** argv) {
     // Return when the engine stops.
     return EXIT_SUCCESS;
 }
+*/
+
+void SetupResources(Config& config) {
+    // set the resources directory
+    // @todo we should check that this path exists
+    // set the resources directory
+    //string resources = "projects/Selection/data/";
+    //DirectoryManager::AppendPath(resources);
+
+    // load resource plug-ins
+    //ResourceManager<IModelResource>::AddPlugin(new OBJPlugin());
+    //ResourceManager<ITextureResource>::AddPlugin(new SDLImagePlugin());
+    //ResourceManager<ITextureResource>::AddPlugin(new TGAPlugin());
+}
+
+void SetupDisplay(Config& config) {
+    if (config.frame         != NULL ||
+        config.viewingvolume != NULL ||
+        config.camera        != NULL ||
+        config.frustum       != NULL ||
+        config.viewport      != NULL)
+        throw Exception("Setup display dependencies are not satisfied.");
+
+    config.frame         = new SDLFrame(800, 600, 32);
+    config.viewingvolume = new ViewingVolume(); 
+    config.camera        = new Camera( *config.viewingvolume );
+    config.camera->SetPosition(Vector<3,float>(0,0,0));
+    config.camera->LookAt(Vector<3,float>(0,0,-1));
+    //config.frustum       = new Frustum(*config.camera, 20, 3000);
+    config.viewport      = new Viewport(0,0,399,299);
+    config.viewport->SetViewingVolume(config.camera);
+
+    config.engine.InitializeEvent().Attach(*config.frame);
+    config.engine.ProcessEvent().Attach(*config.frame);
+    config.engine.DeinitializeEvent().Attach(*config.frame);
+}
+
+void SetupDevices(Config& config) {
+    if (config.keyboard != NULL ||
+        config.mouse    != NULL)
+        throw Exception("Setup devices dependencies are not satisfied.");
+    // Create the mouse and keyboard input modules
+    SDLInput* input = new SDLInput();
+    config.keyboard = input;
+    config.mouse = input;
+
+    // Bind the quit handler
+    QuitHandler* quit_h = new QuitHandler(config.engine);
+    config.keyboard->KeyEvent().Attach(*quit_h);
+
+    // Bind to the engine for processing time
+    config.engine.InitializeEvent().Attach(*input);
+    config.engine.ProcessEvent().Attach(*input);
+    config.engine.DeinitializeEvent().Attach(*input);
+}
+
+void SetupRendering(Config& config) {
+    if (config.viewport == NULL ||
+        config.renderer != NULL ||
+        config.camera == NULL)
+        throw Exception("Setup renderer dependencies are not satisfied.");
+
+    // Create a renderer
+    config.renderer = new OpenGL::Renderer(config.viewport);
+    //config.renderer = new BufferedRenderer(config.viewport);
+
+    // Setup a rendering view
+    IRenderingView* rv = new RTRenderingView(*config.viewport);
+    config.renderer->ProcessEvent().Attach(*rv);
+
+    // Add rendering initialization tasks
+    config.textureLoader = new OpenEngine::Renderers::TextureLoader(*config.renderer);
+    config.renderer->PreProcessEvent().Attach(*config.textureLoader);
+
+    //    DisplayListTransformer* dlt = new DisplayListTransformer(rv);
+    //    config.renderer->InitializeEvent().Attach(*dlt);
+
+    //    config.renderer->PreProcessEvent()
+    //    .Attach( *(new OpenEngine::Renderers::OpenGL::LightRenderer(*config.camera)) );
+
+    config.engine.InitializeEvent().Attach(*config.renderer);
+    config.engine.ProcessEvent().Attach(*config.renderer);
+    config.engine.DeinitializeEvent().Attach(*config.renderer);
+
+    
+    config.hud = new HUD();
+    //config.renderer->PostProcessEvent().Attach(*config.hud);
+    
+    // mouse selector stuff
+    //SelectionSet<ISceneNode>* ss = new SelectionSet<ISceneNode>();
+    config.ms = new MouseSelection(*config.frame, *config.mouse, NULL);
+
+    //TransformationTool* tt = new TransformationTool(*config.textureLoader);
+    //ss->ChangedEvent().Attach(*tt);
+    CameraTool* ct   = new CameraTool();
+    ToolChain* tc    = new ToolChain();
+    //SelectionTool* st = new SelectionTool(*ss);
+    tc->PushBackTool(ct);
+    //tc->PushBackTool(tt);
+    //tc->PushBackTool(st);
+
+    config.renderer->PostProcessEvent().Attach(*config.ms);
+    config.mouse->MouseMovedEvent().Attach(*config.ms);
+    config.mouse->MouseButtonEvent().Attach(*config.ms);
+    config.keyboard->KeyEvent().Attach(*config.ms);
+
+    //add frustrum cameras
+    int width = 800;
+    int height = 600;
+    float dist = 100;
+
+    // bottom right
+    Camera* cam_br = new Camera(*(new ViewingVolume()));
+    cam_br->SetPosition(Vector<3,float>(0,0,dist));
+    cam_br->LookAt(0,0,0);
+    Viewport* vp_br = new Viewport(width/2, 0, width,height/2);
+    vp_br->SetViewingVolume(cam_br);
+    OpenGL::RenderingView* rv_br = new RTRenderingView(*vp_br);
+    config.renderer->ProcessEvent().Attach(*rv_br);
+    // top right
+    Camera* cam_tr = new Camera(*(new ViewingVolume()));
+    cam_tr->SetPosition(Vector<3,float>(0,dist,0));
+    cam_tr->LookAt(0,0,0);
+    Viewport* vp_tr = new Viewport(width/2,height/2, width,height);
+    vp_tr->SetViewingVolume(cam_tr);
+    OpenGL::RenderingView* rv_tr = new RTRenderingView(*vp_tr);
+    config.renderer->ProcessEvent().Attach(*rv_tr);
+
+    // top left
+    Camera* cam_tl = new Camera(*(new ViewingVolume()));
+    cam_tl->SetPosition(Vector<3,float>(dist,0,0));
+    cam_tl->LookAt(0,0,0);
+    Viewport* vp_tl = new Viewport(0,height/2, width/2,height);
+        //new Viewport(800,600);
+    vp_tl->SetViewingVolume(cam_tl);
+    OpenGL::RenderingView* rv_tl = new RTRenderingView(*vp_tl);
+    config.renderer->ProcessEvent().Attach(*rv_tl);
+
+    config.ms->BindTool(config.viewport, tc);
+    config.ms->BindTool(vp_br, tc);
+    config.ms->BindTool(vp_tl, tc);
+    config.ms->BindTool(vp_tr, tc);
+
+}
+
+void SetupScene(Config& config) {
+    if (config.scene  != NULL ||
+        config.mouse  == NULL ||
+        config.keyboard == NULL)
+        throw Exception("Setup scene dependencies are not satisfied.");
+
+    // Create a root scene node
+    
+
+    RenderStateNode* rn = new RenderStateNode();
+    rn->EnableOption(RenderStateNode::COLOR_MATERIAL);
+    rn->EnableOption(RenderStateNode::LIGHTING);
+    //rn->EnableOption(RenderStateNode::BACKFACE);
+
+    ISceneNode* root = config.scene = rn;
+
+    PointLightNode *pln = new PointLightNode();
+    pln->diffuse = Vector<4,float>(.5,.5,.5,1);
+    TransformationNode *lightTn = new TransformationNode();
+    
+    lightTn->SetPosition(Vector<3,float>(0,10,0));
+
+    lightTn->AddNode(pln);
+    root->AddNode(lightTn);
 
 
+    // Shapes
+
+    ShapeNode *sn1 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(10,10,-100), 15));
+    root->AddNode(sn1);
+    TransformationNode *tn2 = new TransformationNode();
+    tn2->Move(0,-10,0);
+    ShapeNode *sn2 = new ShapeNode(new Shapes::Plane(Vector<3,float>(0,-10,0),
+                                                     Vector<3,float>(0,-10,1),
+                                                     Vector<3,float>(1,-10,0)));
+    tn2->AddNode(sn2);
+    root->AddNode(tn2);
+
+
+
+    
+    config.traceTex = EmptyTextureResource::Create(400,300,24);
+    config.traceTex->Load();
+    config.textureLoader->Load(config.traceTex, TextureLoader::RELOAD_QUEUED);
+    
+    config.ms->SetScene(config.scene);
+    config.textureLoader->Load(*config.scene);
+    
+    HUD::Surface *rtHud = config.hud->CreateSurface(config.traceTex);
+    rtHud->SetPosition(HUD::Surface::LEFT,
+                       HUD::Surface::TOP);
+    rtHud->SetScale(2.0,2.0);
+    
+    
+
+    // Supply the scene to the renderer
+    config.renderer->SetSceneRoot(config.scene);
+
+    //config.textureLoader->SetDefaultReloadPolicy(OpenEngine::Renderers::TextureLoader::RELOAD_NEVER);
+}
+
+void SetupDebugging(Config& config) {
+    
+    
+
+    config.scene->AddNode(config.rt->GetRayTracerDebugNode());
+    
+}
+
+
+void SetupRayTracer(Config& config) {
+    config.rt = new RayTracer(config.traceTex, config.scene);
+    
+    config.engine.ProcessEvent().Attach(*config.rt);
+    
+
+}
