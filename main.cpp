@@ -1,10 +1,10 @@
 // main
 // -------------------------------------------------------------------
-// Copyright (C) 2007 OpenEngine.dk (See AUTHORS) 
-// 
-// This program is free software; It is covered by the GNU General 
-// Public License version 2 or any later version. 
-// See the GNU General Public License for more details (see LICENSE). 
+// Copyright (C) 2007 OpenEngine.dk (See AUTHORS)
+//
+// This program is free software; It is covered by the GNU General
+// Public License version 2 or any later version.
+// See the GNU General Public License for more details (see LICENSE).
 //--------------------------------------------------------------------
 
 // OpenEngine stuff
@@ -52,7 +52,7 @@
 
 
 #include "EmptyTextureResource.h"
-    
+#include "KeyRepeater.h"
 
 // name spaces that we will be using.
 // this combined with the above imports is almost the same as
@@ -83,9 +83,25 @@ class RTHandler : public IListener<KeyboardEventArg> {
 public:
     RTHandler(RayTracer& rt) : rt(rt) {}
     void Handle(KeyboardEventArg arg) {
+        if (arg.type == EVENT_RELEASE)
+            return;
         if (arg.sym == KEY_LEFT) {
             rt.markX--;
         }
+        else if (arg.sym == KEY_RIGHT) {
+            rt.markX++;
+        }
+        else if (arg.sym == KEY_UP) {
+            rt.markY++;
+        }
+        else if (arg.sym == KEY_DOWN) {
+            rt.markY--;
+        }
+        else if (arg.sym == KEY_p) {
+            rt.markDebug = true;
+            //rt.GetRayTracerDebugNode()->markDebug = true;
+        }
+
     }
 };
 
@@ -100,7 +116,7 @@ public:
 //	      << " x " << texture->GetHeight() << logger.end;
 //  float fullxtexcoord = 1;
 //  float fullytexcoord = 1;
-//  
+//
 //  FaceSet* faces = new FaceSet();
 //
 //  float horisontalhalfsize = textureHosisontalSize * 0.5;
@@ -162,51 +178,51 @@ public:
 
     void VisitShapeNode(ShapeNode* node) {
         IRenderer *renderer = GetRenderer();
-        
+
         Shape *shape = node->shape;
 
         Shapes::Sphere *sphere = dynamic_cast<Shapes::Sphere*>(shape);
         Shapes::Plane *plane = dynamic_cast<Shapes::Plane*>(shape);
-        
+
         if (sphere) {
 
             glEnable(GL_LIGHTING);
             glEnable(GL_COLOR_MATERIAL);
-            
+
             RenderingView::ApplyMaterial(sphere->mat);
-            
+
             Vector<3,float> center = sphere->center;
             float radius = sphere->radius;
             Vector<4,float> color = Vector<4,float>(1,0,0,1);
-                        
+
             //logger.info << "  hesten" << logger.end;
 
 
-                                    
+
             CHECK_FOR_GL_ERROR();
-            
+
             glPushMatrix();
             glTranslatef(center[0], center[1], center[2]);
             glColor3f(color[0], color[1], color[2]);
             GLUquadricObj* qobj = gluNewQuadric();
             glLineWidth(1);
             gluQuadricNormals(qobj, GLU_SMOOTH);
-            gluQuadricDrawStyle(qobj, GLU_FILL);
+            gluQuadricDrawStyle(qobj, GLU_LINE);
             gluQuadricOrientation(qobj, GLU_INSIDE);
-            gluSphere(qobj, radius, 20, 20); 
+            gluSphere(qobj, radius, 15, 15);
             gluDeleteQuadric(qobj);
             glPopMatrix();
-            
+
             // reset state
-                        
+
             CHECK_FOR_GL_ERROR();
-            
-        } 
+
+        }
         else if (plane) {
                 // draw a thicker line in origin
             float dist = 0.0;
             float space = 10.0;
-            unsigned int number = 100;            
+            unsigned int number = 100;
             float width = space*number;
             Vector<3,float> solidColor;
             bool solidRepeat = true;
@@ -250,8 +266,8 @@ struct Config {
     RayTracer*              rt;
     HUD*                    hud;
     EmptyTextureResourcePtr traceTex;
-    
-    
+
+
 
     OpenEngine::Renderers::TextureLoader* textureLoader;
 
@@ -265,7 +281,7 @@ struct Config {
         , renderer(NULL)
         , mouse(NULL)
         , keyboard(NULL)
-        , scene(NULL)        
+        , scene(NULL)
         , ms(NULL)
         , rt(NULL)
         , hud(NULL)
@@ -303,16 +319,16 @@ int main(int argc, char** argv) {
     SetupDevices(config);
     SetupRendering(config);
     SetupScene(config);
-    SetupRayTracer(config);    
+    SetupRayTracer(config);
 
     // Possibly add some debugging stuff
     SetupDebugging(config);
 
     config.rt->Start();
-    
+
     // Start up the engine.
     engine->Start();
-    
+
     config.rt->run = false;
     config.rt->Wait();
 
@@ -341,7 +357,7 @@ int main(int argc, char** argv) {
     rn->EnableOption(RenderStateNode::LIGHTING);
     rn->EnableOption(RenderStateNode::BACKFACE);
     //rn->EnableOption(RenderStateNode::WIREFRAME);
-    
+
     ISceneNode* root = setup->GetScene();
     root->AddNode(rn);
     root = rn;
@@ -353,21 +369,21 @@ int main(int argc, char** argv) {
     //s->EvalAndPrint("(display (+ 1 2))");
     setup->GetEngine().ProcessEvent().Attach(*s);
 
-    
-    
+
+
 
     FaceSet *fs = new FaceSet();
     FaceBuilder::FaceState state;
     state.color = Vector<4,float>(1,0,0,1);
-    
-    FaceBuilder::MakeABox(fs, state, Vector<3,float>(0,0,0), Vector<3,float>(10,10,10));    
+
+    FaceBuilder::MakeABox(fs, state, Vector<3,float>(0,0,0), Vector<3,float>(10,10,10));
     GeometryNode *gn = new GeometryNode(fs);
     //root->AddNode(gn);
 
 
     FaceSet *fs1 = new FaceSet();
     state.color = Vector<4,float>(0,1,0,1);
-    
+
     FaceBuilder::MakeASphere(fs1, state, Vector<3,float>(-20,0,0), 20, 10);
     GeometryNode *gn2 = new GeometryNode(fs1);
     TransformationNode *sphereTrans = new TransformationNode();
@@ -377,7 +393,7 @@ int main(int argc, char** argv) {
 
     ScriptBridge::AddHandler<TransformationNode>(new TransformationNodeHandler());
     ScriptBridge::AddHandler<Vector<3,float> >(new VectorHandler());
-    
+
     sbo sb = ScriptBridge::CreateSboPointer<TransformationNode>(sphereTrans);
 
 
@@ -385,7 +401,7 @@ int main(int argc, char** argv) {
 
     PointLightNode *pln = new PointLightNode();
     TransformationNode *lightTn = new TransformationNode();
-    
+
     lightTn->SetPosition(Vector<3,float>(0,100,0));
 
     lightTn->AddNode(pln);
@@ -396,12 +412,12 @@ int main(int argc, char** argv) {
     Camera *cam = setup->GetCamera();
     cam->SetPosition(Vector<3,float>(0,0,0));
     cam->LookAt(Vector<3,float>(0,0,-1));
-    
+
     EmptyTextureResourcePtr traceTexture = EmptyTextureResource::Create(400,300,24);
     traceTexture->Load();
     setup->GetTextureLoader().Load(traceTexture, TextureLoader::RELOAD_QUEUED);
 
-    
+
 
     ShapeNode *sn1 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(10,10,-100), 15));
     root->AddNode(sn1);
@@ -463,7 +479,7 @@ void SetupDisplay(Config& config) {
         throw Exception("Setup display dependencies are not satisfied.");
 
     config.frame         = new SDLFrame(800, 600, 32);
-    config.viewingvolume = new ViewingVolume(); 
+    config.viewingvolume = new ViewingVolume();
     config.camera        = new Camera( *config.viewingvolume );
     config.camera->SetPosition(Vector<3,float>(0,0,0));
     config.camera->LookAt(Vector<3,float>(0,0,-1));
@@ -523,10 +539,10 @@ void SetupRendering(Config& config) {
     config.engine.ProcessEvent().Attach(*config.renderer);
     config.engine.DeinitializeEvent().Attach(*config.renderer);
 
-    
+
     config.hud = new HUD();
     config.renderer->PostProcessEvent().Attach(*config.hud);
-    
+
     // mouse selector stuff
     //SelectionSet<ISceneNode>* ss = new SelectionSet<ISceneNode>();
     config.ms = new MouseSelection(*config.frame, *config.mouse, NULL);
@@ -560,8 +576,8 @@ void SetupRendering(Config& config) {
     config.renderer->ProcessEvent().Attach(*rv_br);
     // top right
     Camera* cam_tr = new Camera(*(new ViewingVolume()));
-    cam_tr->SetPosition(Vector<3,float>(0,dist,0));
-    cam_tr->LookAt(0,0,0);
+    cam_tr->SetPosition(Vector<3,float>(0,150,-100));
+    cam_tr->LookAt(0,0,-100);
     Viewport* vp_tr = new Viewport(width/2,height/2, width,height);
     vp_tr->SetViewingVolume(cam_tr);
     OpenGL::RenderingView* rv_tr = new RTRenderingView(*vp_tr);
@@ -591,7 +607,7 @@ void SetupScene(Config& config) {
         throw Exception("Setup scene dependencies are not satisfied.");
 
     // Create a root scene node
-    
+
 
     RenderStateNode* rn = new RenderStateNode();
     rn->EnableOption(RenderStateNode::COLOR_MATERIAL);
@@ -603,7 +619,7 @@ void SetupScene(Config& config) {
     PointLightNode *pln = new PointLightNode();
     pln->diffuse = Vector<4,float>(.5,.5,.5,1);
     TransformationNode *lightTn = new TransformationNode();
-    
+
     lightTn->SetPosition(Vector<3,float>(0,10,0));
 
     lightTn->AddNode(pln);
@@ -624,20 +640,20 @@ void SetupScene(Config& config) {
 
 
 
-    
+
     config.traceTex = EmptyTextureResource::Create(400,300,24);
     config.traceTex->Load();
     config.textureLoader->Load(config.traceTex, TextureLoader::RELOAD_QUEUED);
-    
+
     config.ms->SetScene(config.scene);
     config.textureLoader->Load(*config.scene);
-    
+
     HUD::Surface *rtHud = config.hud->CreateSurface(config.traceTex);
     rtHud->SetPosition(HUD::Surface::LEFT,
                        HUD::Surface::TOP);
     rtHud->SetScale(2.0,2.0);
-    
-    
+
+
 
     // Supply the scene to the renderer
     config.renderer->SetSceneRoot(config.scene);
@@ -646,22 +662,25 @@ void SetupScene(Config& config) {
 }
 
 void SetupDebugging(Config& config) {
-    
-    
+
+
 
     config.scene->AddNode(config.rt->GetRayTracerDebugNode());
-    
+
 }
 
 
 void SetupRayTracer(Config& config) {
     config.rt = new RayTracer(config.traceTex, config.scene);
-    
+
     config.engine.ProcessEvent().Attach(*config.rt);
     
+    KeyRepeater* krp = new KeyRepeater();
+
+    config.engine.ProcessEvent().Attach(*krp);
+    config.keyboard->KeyEvent().Attach(*krp);
 
     RTHandler* rt_h = new RTHandler(*config.rt);
-    config.keyboard->KeyEvent().Attach(*rt_h);
-
+    krp->KeyEvent().Attach(*rt_h);
 
 }

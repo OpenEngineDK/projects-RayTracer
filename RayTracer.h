@@ -3,6 +3,7 @@
 
 #include <Logging/Logger.h>
 #include <Core/Thread.h>
+#include <Core/Mutex.h>
 #include <Core/EngineEvents.h>
 
 #include <Math/Vector.h>
@@ -33,6 +34,8 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
     class RayTracerRenderNode : public RenderNode {
         RayTracer* rt;
     public:
+        bool markDebug;
+
         RayTracerRenderNode(RayTracer* rt) : rt(rt) {}
 
         virtual void Apply(IRenderingView *renderingView);
@@ -66,23 +69,23 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
     int traceNum;
     bool dirty;
 
-    Shape* NearestShape(Ray r, Vector<3,float>& p);
+    Shape* NearestShape(Ray r, Vector<3,float>& p, bool debug= false);
 
     Ray RayForPoint(int u, int v);
 
-    Vector<4,float> TraceRay(Ray r, int depth);
+    Vector<4,float> TraceRay(Ray r, int depth, bool debug=false);
     void Trace();
     Timer timer;
     ISceneNode* root;
 
-    
+    Mutex objectsLock;
 
 public:
     bool run;
 
     unsigned int markX;
     unsigned int markY;
-
+    bool markDebug;
 
     
     RayTracer(EmptyTextureResourcePtr tex, ISceneNode* root);
@@ -92,7 +95,7 @@ public:
 
     void VisitShapeNode(ShapeNode* node);
 
-    RenderNode* GetRayTracerDebugNode();
+    RayTracerRenderNode* GetRayTracerDebugNode();
 };
 
 #endif
