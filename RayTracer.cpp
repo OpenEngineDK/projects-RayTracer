@@ -5,6 +5,8 @@
 #include <Scene/ISceneNode.h>
 #include <Scene/ShapeNode.h>
 
+using namespace std;
+
 template <unsigned int N, class T>
 Vector<N,T> VecMult(Vector<N,T> a, Vector<N,T> b) {
     Vector<N,T> r;
@@ -34,7 +36,7 @@ RayTracer::RayTracer(EmptyTextureResourcePtr tex, IViewingVolume* vol, ISceneNod
 
     Light l;
     l.pos = Vector<3,float>(200,100,100);
-    l.color = Vector<4,float>(.5,.5,.5,1);
+    l.color = Vector<4,float>(1);
     lights.push_back(l);
 
     maxDepth = 1;
@@ -210,7 +212,7 @@ Shape* RayTracer::NearestShape(Ray r, Vector<3,float>& point, bool debug) {
     if (nearestObj) {
 
         if (debug) {
-            logger.info  << " best t = " << nearestT 
+            logger.info  << " best t = " << nearestT
                          << " => " << nearestObj
                          << logger.end;
         }
@@ -291,19 +293,33 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth, bool debug) {
             float diff = (shaddowRay.direction * norm );
 
 
-            if (diff > 0)
-                color += diff * (l.color  * nearestObj->mat->diffuse);
+            if (diff > 0) {
+                // diffuse
+                Vector<4,float> diffuse = diff * VecMult(l.color, nearestObj->mat->diffuse);
+                color += diffuse;
+            }
+
+            // specular (phong)
+            Vector<3,float> V = r.direction;
+            Vector<3,float> L = shaddowRay.direction;
+
+
+            Vector<3,float> R = L - 2.0f * ( L * norm ) * norm;
+
+            float dot = V * R;
+            if (dot > 0) {
+                Vector<4,float> spec = powf(dot,20) * nearestObj->mat->specular;
+                color +=  VecMult(l.color , spec);
+            }
 
             if (debug) {
                 logger.info << "diff = " << diff << logger.end;
                 logger.info << "diffuse = " << nearestObj->mat->diffuse << logger.end;
-                logger.info << "color = " 
-                            << diff * VecMult(l.color, nearestObj->mat->diffuse) 
+                logger.info << "color = "
+                            << diff * VecMult(l.color, nearestObj->mat->diffuse)
                             << logger.end;
             }
 
-
-            //color = l.color;
         } else {
             if(debug)
                 logger.info << "shaddow!" << logger.end;
@@ -313,37 +329,33 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth, bool debug) {
 
 
 
-    //return color;
+    // REFLECTION
+
+    if (nearestObj->reflection > 0.0) {
+        Ray reflectionRay;
+        reflectionRay.origin = nearestPoint;
+        Vector<3,float> normal = nearestObj->NormalAt(nearestPoint);
+        Vector<3,float> d = r.direction;
+
+        reflectionRay.direction = d - 2 * (normal * d ) * normal;
 
 
+        reflectionRay.AddEps();
 
-    Ray reflectionRay;
-    reflectionRay.origin = nearestPoint;
-    Vector<3,float> normal = nearestObj->NormalAt(nearestPoint);
-    Vector<3,float> d = r.direction;
+        Vector<4,float> recurseColor = TraceRay(reflectionRay,depth+1,debug);
+        float reflection = nearestObj->reflection;
 
-    reflectionRay.direction = d - 2 * (normal * d ) * normal;
+        if (debug)
+            logger.info << "reflection color = "
+                        << recurseColor * reflection
+                        << logger.end;
 
-    //logger.info << "normal " << normal << logger.end;
-    //logger.info << "reflection " << reflectionRay << logger.end;
+        color += recurseColor * reflection;
+    }
 
-    
-    reflectionRay.AddEps();
-    
-    Vector<4,float> recurseColor = TraceRay(reflectionRay,depth+1,debug);
-    float reflection = 0.9;
-
-    if (debug)
-        logger.info << "reflection color = " 
-                    << recurseColor * reflection 
-                    << logger.end;
-
-    color += recurseColor * reflection;
-
-    //return recurseColor;
 
     for (int i=0;i<4;i++) {
-        color[i] = fmin(color[i],1.0);
+        color[i] = min(color[i],1.0f);
     }
 
     //(*texture)(x,y,traceNum % 3) = x*2;
@@ -363,55 +375,53 @@ Vector<3,float> TransformPoint(Vector<3,float> p, Matrix<4,4,float> m) {
     m = m.GetInverse();
     pp = (m * pp);
 
-    
+
     r = Vector<3,float>(pp[0],
                         pp[1],
                         pp[2]);
-    
+
 
     return r;
 }
 
-Ray RayTracer::RayForPoint(int u, int v) {
-
-    float x = ((2*u - width) / width) * tan(fovX);
-    float y = ((2*v - height) / height) * tan(fovY);
-
-    Vector<3,float> p;
-    p[0] = x;
-    p[1] = y;
-    p[2] = -1;
-
-    // Camera    
-    Matrix<4,4,float> projMat = volume->GetProjectionMatrix();
-    Matrix<4,4,float> viewMat = volume->GetViewMatrix();
+Ray RayTracer::RayForPoint(unsigned int u, unsigned int v) {
 
 
-    if (markDebug &&
-        markX == u &&
-        markY == v) {
-        logger.info << u << " " << v << logger.end;
-        logger.info << p << logger.end;
-        projMat.Transpose();
-        logger.info << projMat.GetInverse() * Vector<4,float>(2*u/width,2*v/height,1,1) << logger.end;
-    }
+    // This is based on magic!
+    // http://www.gamedev.net/community/forums/topic.asp?topic_id=425909
+
+    float x = ((2*u - width) / width);// * tan(fovX);
+    float y = ((2*v - height) / height);// * tan(fovY);
+
+    Vector<4,float> projPoint(x,y,-1,0);
+
+    // Camera
+    Matrix<4,4,float> projMat = _tmpProj;
 
 
+    projPoint[0] /= projMat(0,0);
+    projPoint[1] /= projMat(1,1);
 
+    Matrix<4,4,float> iv = _tmpIV;
+    //Vector<3,float> rOrig;
+    Vector<4,float> rDir4;
 
-    Vector<3,float> cp = camPos;
+    iv.Transpose();
 
-    cp = TransformPoint(cp,viewMat);
-    p = TransformPoint(p,viewMat);
+    rDir4 =  iv * projPoint;
+    Vector<3,float> rDir(rDir4[0],
+                         rDir4[1],
+                         rDir4[2]);
 
+    Ray rr;
+    rr.direction = rDir.GetNormalize();
+    // rr.origin = Vector<3,float>(iv(0,3), // iv is transposed!
+    //                             iv(1,3),
+    //                             iv(2,3));
 
+    rr.origin = _tmpOrigo;
 
-
-    Ray r;
-    r.origin = cp;
-    r.direction = (p - cp).GetNormalize();
-
-    return r;
+    return rr;
 
 }
 
@@ -427,16 +437,37 @@ void RayTracer::Trace() {
     root->Accept(*this);
     objectsLock.Unlock();
 
-    // Camera    
-    Matrix<4,4,float> projMat = volume->GetProjectionMatrix();
-    Matrix<4,4,float> viewMat = volume->GetViewMatrix();
 
-    for (int i=0;i<4;i++) {
-        for(int j=0;j<4;j++) {
-            logger.info << projMat[i][j] << ",";
-        }
-        logger.info << logger.end;
+    _tmpIV = volume->GetViewMatrix().GetInverse();
+    _tmpProj = volume->GetProjectionMatrix();
+    _tmpOrigo = Vector<3,float>(_tmpIV(3,0), // iv is not transposed!
+                                _tmpIV(3,1),
+                                _tmpIV(3,2));
+
+    if (markDebug) {
+        Ray top = RayForPoint(41,41);
+        Ray delta = RayForPoint(42,42);
+
+        Vector<3,float> dd = delta.direction - top.direction;
+
+        logger.info << "Ray Delta " << dd << logger.end;
+
+
+         top = RayForPoint(0,0);
+         delta = RayForPoint(1,1);
+
+         dd = delta.direction - top.direction;
+
+        logger.info << "Ray Delta2" << dd << logger.end;
+
+
     }
+    // for (int i=0;i<4;i++) {
+    //     for(int j=0;j<4;j++) {
+    //         logger.info << projMat[i][j] << ",";
+    //     }
+    //     logger.info << logger.end;
+    // }
 
     traceNum++;
     for (unsigned int v=0;v<texture->GetHeight();v++) {
@@ -452,18 +483,18 @@ void RayTracer::Trace() {
 
 
             Ray r = RayForPoint(u,v);
-            
-            
+
+
 
             //logger.info << "Ray: " << r << logger.end;
 
             Vector<4,float> col;
             if (markX == u && markY == v)
                 col = TraceRay(r,0,markDebug);
-            else 
+            else
                 col = TraceRay(r,0);
 
-            
+
             (*texture)(u,v,0) = col[0]*255;
             (*texture)(u,v,1) = col[1]*255;
             (*texture)(u,v,2) = col[2]*255;

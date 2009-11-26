@@ -74,7 +74,7 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
 
     Shape* NearestShape(Ray r, Vector<3,float>& p, bool debug= false);
 
-    Ray RayForPoint(int u, int v);
+    Ray RayForPoint(unsigned int u, unsigned int v);
 
     Vector<4,float> TraceRay(Ray r, int depth, bool debug=false);
     void Trace();
@@ -84,6 +84,12 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
     Mutex objectsLock;
 
     IViewingVolume* volume;
+
+    Matrix<4,4,float> _tmpIV;
+    Matrix<4,4,float> _tmpProj;
+
+    Vector<3,float> _tmpOrigo;
+    
 
 public:
     bool run;

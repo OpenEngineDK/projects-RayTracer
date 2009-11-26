@@ -276,121 +276,6 @@ int main(int argc, char** argv) {
     // Return when the engine stops.
     return EXIT_SUCCESS;
 }
-/*
-
-
-    // Create simple setup
-    QtEnvironment* env = new QtEnvironment(true,1024,768);
-    Viewport* vp = new Viewport(env->GetFrame());
-    RenderingView *rv = new RTRenderingView(*vp);
-
-    SimpleSetup* setup = new SimpleSetup("Ray Tracer",
-                                         vp,env,rv);
-    setup->AddDataDirectory("projects/RayTracer/data/");
-    RenderStateNode* rn = new RenderStateNode();
-    rn->EnableOption(RenderStateNode::COLOR_MATERIAL);
-    rn->EnableOption(RenderStateNode::LIGHTING);
-    rn->EnableOption(RenderStateNode::BACKFACE);
-    //rn->EnableOption(RenderStateNode::WIREFRAME);
-
-    ISceneNode* root = setup->GetScene();
-    root->AddNode(rn);
-    root = rn;
-
-    Scheme *s = new Scheme();
-    s->AddFileToAutoLoad("init.scm");
-    s->AddFileToAutoLoad("oe-init.scm");
-    s->AddFileToAutoLoad("test.scm");
-    //s->EvalAndPrint("(display (+ 1 2))");
-    setup->GetEngine().ProcessEvent().Attach(*s);
-
-
-
-
-    FaceSet *fs = new FaceSet();
-    FaceBuilder::FaceState state;
-    state.color = Vector<4,float>(1,0,0,1);
-
-    FaceBuilder::MakeABox(fs, state, Vector<3,float>(0,0,0), Vector<3,float>(10,10,10));
-    GeometryNode *gn = new GeometryNode(fs);
-    //root->AddNode(gn);
-
-
-    FaceSet *fs1 = new FaceSet();
-    state.color = Vector<4,float>(0,1,0,1);
-
-    FaceBuilder::MakeASphere(fs1, state, Vector<3,float>(-20,0,0), 20, 10);
-    GeometryNode *gn2 = new GeometryNode(fs1);
-    TransformationNode *sphereTrans = new TransformationNode();
-    sphereTrans->SetPosition(Vector<3,float>(10,10,10));
-    sphereTrans->AddNode(gn2);
-    //root->AddNode(sphereTrans);
-
-    ScriptBridge::AddHandler<TransformationNode>(new TransformationNodeHandler());
-    ScriptBridge::AddHandler<Vector<3,float> >(new VectorHandler());
-
-    sbo sb = ScriptBridge::CreateSboPointer<TransformationNode>(sphereTrans);
-
-
-    s->DefineSbo("dot-tn",sb);
-
-    PointLightNode *pln = new PointLightNode();
-    TransformationNode *lightTn = new TransformationNode();
-
-    lightTn->SetPosition(Vector<3,float>(0,100,0));
-
-    lightTn->AddNode(pln);
-    root->AddNode(lightTn);
-
-
-
-    Camera *cam = setup->GetCamera();
-    cam->SetPosition(Vector<3,float>(0,0,0));
-    cam->LookAt(Vector<3,float>(0,0,-1));
-
-    EmptyTextureResourcePtr traceTexture = EmptyTextureResource::Create(400,300,24);
-    traceTexture->Load();
-    setup->GetTextureLoader().Load(traceTexture, TextureLoader::RELOAD_QUEUED);
-
-
-
-    ShapeNode *sn1 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(10,10,-100), 15));
-    root->AddNode(sn1);
-    TransformationNode *tn2 = new TransformationNode();
-    tn2->Move(0,-10,0);
-    ShapeNode *sn2 = new ShapeNode(new Shapes::Plane(Vector<3,float>(0,-10,0),
-                                                     Vector<3,float>(0,-10,1),
-                                                     Vector<3,float>(1,-10,0)));
-    tn2->AddNode(sn2);
-    root->AddNode(tn2);
-
-    RayTracer *rt = new RayTracer(traceTexture,root);
-    //TransformationNode* traceTexNode = CreateTextureBillboard(traceTexture,1.0);
-    //traceTexNode->Rotate(0,180,0);
-    //root->AddNode(traceTexNode);
-
-    root->AddNode(rt->GetRayTracerDebugNode());
-
-    // add ray trace hud.
-    // RayTracerPtr rt = RayTracer::Create();
-    // setup->GetTextureLoader().Load(rt, TextureLoader::RELOAD_QUEUED);
-    HUD::Surface *rtHud = setup->GetHUD().CreateSurface(traceTexture);
-    rtHud->SetPosition(HUD::Surface::LEFT,
-                        HUD::Surface::TOP);
-
-    setup->GetEngine().ProcessEvent().Attach(*rt);
-
-    rt->Start();
-    // Start the engine.
-    setup->GetEngine().Start();
-
-    rt->run = false;
-    rt->Wait();
-
-    // Return when the engine stops.
-    return EXIT_SUCCESS;
-}
-*/
 
 void SetupResources(Config& config) {
     // set the resources directory
@@ -563,8 +448,19 @@ void SetupScene(Config& config) {
 
     // Shapes
 
-    ShapeNode *sn1 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(10,10,-100), 15));
+    ShapeNode *sn1 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(20,10,-100), 15));
+    sn1->shape->mat->diffuse = Vector<4,float>(1.0,0,0,1.0);
+    sn1->shape->mat->specular = Vector<4,float>(1);
+    sn1->shape->reflection = 1.0;
     root->AddNode(sn1);
+
+    ShapeNode *sn3 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(-20,10,-100), 15));
+    sn3->shape->mat->diffuse = Vector<4,float>(0,0,1.0,1.0);
+    sn3->shape->reflection = 1.0;
+    root->AddNode(sn3);
+
+
+
     TransformationNode *tn2 = new TransformationNode();
     tn2->Move(0,-10,0);
     ShapeNode *sn2 = new ShapeNode(new Shapes::Plane(Vector<3,float>(0,-10,0),
