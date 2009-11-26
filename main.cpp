@@ -106,72 +106,6 @@ public:
 };
 
 
-
-//static TransformationNode* CreateTextureBillboard(ITextureResourcePtr texture,
-//						  float scale) {
-//  unsigned int textureHosisontalSize = texture->GetWidth();
-//  unsigned int textureVerticalSize = texture->GetHeight();
-//
-//  logger.info << "w x h = " << texture->GetWidth()
-//	      << " x " << texture->GetHeight() << logger.end;
-//  float fullxtexcoord = 1;
-//  float fullytexcoord = 1;
-//
-//  FaceSet* faces = new FaceSet();
-//
-//  float horisontalhalfsize = textureHosisontalSize * 0.5;
-//  Vector<3,float>* lowerleft = new Vector<3,float>(horisontalhalfsize,0,0);
-//  Vector<3,float>* lowerright = new Vector<3,float>(-horisontalhalfsize,0,0);
-//  Vector<3,float>* upperleft = new Vector<3,float>(horisontalhalfsize,textureVerticalSize,0);
-//  Vector<3,float>* upperright = new Vector<3,float>(-horisontalhalfsize,textureVerticalSize,0);
-//
-//  FacePtr leftside = FacePtr(new Face(*lowerleft,*lowerright,*upperleft));
-//
-//        /*
-//          leftside->texc[1] = Vector<2,float>(1,0);
-//          leftside->texc[0] = Vector<2,float>(0,0);
-//          leftside->texc[2] = Vector<2,float>(0,1);
-//        */
-//  leftside->texc[1] = Vector<2,float>(0,fullytexcoord);
-//  leftside->texc[0] = Vector<2,float>(fullxtexcoord,fullytexcoord);
-//  leftside->texc[2] = Vector<2,float>(fullxtexcoord,0);
-//  leftside->norm[0] = leftside->norm[1] = leftside->norm[2] = Vector<3,float>(0,0,1);
-//  leftside->CalcHardNorm();
-//  leftside->Scale(scale);
-//  faces->Add(leftside);
-//
-//  FacePtr rightside = FacePtr(new Face(*lowerright,*upperright,*upperleft));
-//        /*
-//          rightside->texc[2] = Vector<2,float>(0,1);
-//          rightside->texc[1] = Vector<2,float>(1,1);
-//          rightside->texc[0] = Vector<2,float>(1,0);
-//        */
-//  rightside->texc[2] = Vector<2,float>(fullxtexcoord,0);
-//  rightside->texc[1] = Vector<2,float>(0,0);
-//  rightside->texc[0] = Vector<2,float>(0,fullytexcoord);
-//  rightside->norm[0] = rightside->norm[1] = rightside->norm[2] = Vector<3,float>(0,0,1);
-//  rightside->CalcHardNorm();
-//  rightside->Scale(scale);
-//  faces->Add(rightside);
-//
-//  MaterialPtr m = leftside->mat = rightside->mat = MaterialPtr(new Material());
-//  m->texr = texture;
-//
-//  GeometryNode* node = new GeometryNode();
-//  node->SetFaceSet(faces);
-//  TransformationNode* tnode = new TransformationNode();
-//  tnode->AddNode(node);
-//  return tnode;
-//}
-
-
-/**
- * Main method for the first quarter project of CGD.
- * Corresponds to the
- *   public static void main(String args[])
- * method in Java.
- */
-
 class RTRenderingView : public RenderingView {
 public:
     RTRenderingView(Viewport& viewport) : IRenderingView(viewport),RenderingView(viewport) {}
@@ -208,6 +142,7 @@ public:
             glLineWidth(1);
             gluQuadricNormals(qobj, GLU_SMOOTH);
             gluQuadricDrawStyle(qobj, GLU_LINE);
+            //gluQuadricDrawStyle(qobj, GLU_FILL);
             gluQuadricOrientation(qobj, GLU_INSIDE);
             gluSphere(qobj, radius, 15, 15);
             gluDeleteQuadric(qobj);
@@ -671,7 +606,7 @@ void SetupDebugging(Config& config) {
 
 
 void SetupRayTracer(Config& config) {
-    config.rt = new RayTracer(config.traceTex, config.scene);
+    config.rt = new RayTracer(config.traceTex, config.camera, config.scene);
 
     config.engine.ProcessEvent().Attach(*config.rt);
     

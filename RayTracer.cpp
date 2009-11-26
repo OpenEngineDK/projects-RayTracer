@@ -14,7 +14,8 @@ Vector<N,T> VecMult(Vector<N,T> a, Vector<N,T> b) {
     return r;
 }
 
-RayTracer::RayTracer(EmptyTextureResourcePtr tex, ISceneNode* root) : texture(tex),traceNum(0),root(root),run(true) {
+RayTracer::RayTracer(EmptyTextureResourcePtr tex, IViewingVolume* vol, ISceneNode* root)
+    : texture(tex),traceNum(0),root(root),volume(vol),run(true) {
     for (unsigned int x=0;x<texture->GetWidth();x++)
         for (unsigned int y=0;y<texture->GetHeight();y++) {
             (*texture)(x,y,0) = x;
@@ -40,8 +41,8 @@ RayTracer::RayTracer(EmptyTextureResourcePtr tex, ISceneNode* root) : texture(te
 
     timer.Start();
 
-    markX = 180;
-    markY = 15;
+    markX = 200;
+    markY = 80;
 
     rnode = new RayTracerRenderNode(this);
 }
@@ -351,6 +352,26 @@ Vector<4,float> RayTracer::TraceRay(Ray r, int depth, bool debug) {
     return color;
 }
 
+Vector<3,float> TransformPoint(Vector<3,float> p, Matrix<4,4,float> m) {
+    Vector<3,float> r;
+
+    Vector<4,float> pp(p[0],
+                       p[1],
+                       p[2],
+                       1);
+    m.Transpose();
+    m = m.GetInverse();
+    pp = (m * pp);
+
+    
+    r = Vector<3,float>(pp[0],
+                        pp[1],
+                        pp[2]);
+    
+
+    return r;
+}
+
 Ray RayTracer::RayForPoint(int u, int v) {
 
     float x = ((2*u - width) / width) * tan(fovX);
@@ -361,9 +382,34 @@ Ray RayTracer::RayForPoint(int u, int v) {
     p[1] = y;
     p[2] = -1;
 
+    // Camera    
+    Matrix<4,4,float> projMat = volume->GetProjectionMatrix();
+    Matrix<4,4,float> viewMat = volume->GetViewMatrix();
+
+
+    if (markDebug &&
+        markX == u &&
+        markY == v) {
+        logger.info << u << " " << v << logger.end;
+        logger.info << p << logger.end;
+        projMat.Transpose();
+        logger.info << projMat.GetInverse() * Vector<4,float>(2*u/width,2*v/height,1,1) << logger.end;
+    }
+
+
+
+
+    Vector<3,float> cp = camPos;
+
+    cp = TransformPoint(cp,viewMat);
+    p = TransformPoint(p,viewMat);
+
+
+
+
     Ray r;
-    r.origin = camPos;
-    r.direction = (p - camPos).GetNormalize();
+    r.origin = cp;
+    r.direction = (p - cp).GetNormalize();
 
     return r;
 
@@ -377,12 +423,20 @@ void RayTracer::Trace() {
     // lock
 
     objectsLock.Lock();
-
     objects.clear();
-
     root->Accept(*this);
-
     objectsLock.Unlock();
+
+    // Camera    
+    Matrix<4,4,float> projMat = volume->GetProjectionMatrix();
+    Matrix<4,4,float> viewMat = volume->GetViewMatrix();
+
+    for (int i=0;i<4;i++) {
+        for(int j=0;j<4;j++) {
+            logger.info << projMat[i][j] << ",";
+        }
+        logger.info << logger.end;
+    }
 
     traceNum++;
     for (unsigned int v=0;v<texture->GetHeight();v++) {
@@ -398,6 +452,8 @@ void RayTracer::Trace() {
 
 
             Ray r = RayForPoint(u,v);
+            
+            
 
             //logger.info << "Ray: " << r << logger.end;
 

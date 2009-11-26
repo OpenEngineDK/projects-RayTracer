@@ -13,7 +13,7 @@
 #include <Scene/RenderNode.h>
 #include <Utils/Timer.h>
 #include <Renderers/IRenderingView.h>
-
+#include <Display/IViewingVolume.h>
 
 #include "EmptyTextureResource.h"
 
@@ -25,11 +25,15 @@ using namespace OpenEngine::Math;
 using namespace OpenEngine::Utils;
 using namespace OpenEngine::Shapes;
 using namespace OpenEngine::Scene;
+using namespace OpenEngine::Display;
+
 using namespace std;
 
 
 
 class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISceneNodeVisitor {
+
+
 
     class RayTracerRenderNode : public RenderNode {
         RayTracer* rt;
@@ -61,7 +65,6 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
     float fovY;
 
     float height,width;
-
     int maxDepth;
 
     EmptyTextureResourcePtr texture;
@@ -80,6 +83,8 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
 
     Mutex objectsLock;
 
+    IViewingVolume* volume;
+
 public:
     bool run;
 
@@ -88,7 +93,7 @@ public:
     bool markDebug;
 
     
-    RayTracer(EmptyTextureResourcePtr tex, ISceneNode* root);
+    RayTracer(EmptyTextureResourcePtr tex, IViewingVolume* vol, ISceneNode* root);
     void Run();
 
     void Handle(ProcessEventArg arg);
