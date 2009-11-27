@@ -99,7 +99,7 @@ public:
         }
         else if (arg.sym == KEY_p) {
             rt.markDebug = true;
-            //rt.GetRayTracerDebugNode()->markDebug = true;
+            rt.GetRayTracerDebugNode()->markDebug = true;
         }
 
     }
@@ -301,8 +301,8 @@ void SetupDisplay(Config& config) {
     config.frame         = new SDLFrame(800, 600, 32);
     config.viewingvolume = new ViewingVolume();
     config.camera        = new Camera( *config.viewingvolume );
-    config.camera->SetPosition(Vector<3,float>(0,0,0));
-    config.camera->LookAt(Vector<3,float>(0,0,-1));
+    config.camera->SetPosition(Vector<3,float>(30,20,-80));
+    config.camera->LookAt(Vector<3,float>(-20,10,-100));
     //config.frustum       = new Frustum(*config.camera, 20, 3000);
     config.viewport      = new Viewport(0,0,399,299);
     config.viewport->SetViewingVolume(config.camera);
@@ -451,13 +451,25 @@ void SetupScene(Config& config) {
     ShapeNode *sn1 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(20,10,-100), 15));
     sn1->shape->mat->diffuse = Vector<4,float>(1.0,0,0,1.0);
     sn1->shape->mat->specular = Vector<4,float>(1);
+    sn1->shape->mat->shininess = 20;
     sn1->shape->reflection = 1.0;
     root->AddNode(sn1);
 
     ShapeNode *sn3 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(-20,10,-100), 15));
     sn3->shape->mat->diffuse = Vector<4,float>(0,0,1.0,1.0);
-    sn3->shape->reflection = 1.0;
+    sn3->shape->reflection = .5;
     root->AddNode(sn3);
+
+
+    ShapeNode *sn4 = new ShapeNode(new Shapes::Sphere(Vector<3,float>(0,10,-80), 15));
+    sn4->shape->mat->diffuse = Vector<4,float>(0.005);
+    sn4->shape->mat->specular = Vector<4,float>(1);
+    sn4->shape->mat->shininess = 30;
+    sn4->shape->transparent = true;
+    sn4->shape->refraction = 1.5;
+    sn4->shape->reflection = 0.2;
+    
+    root->AddNode(sn4);
 
 
 

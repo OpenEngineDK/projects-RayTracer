@@ -33,7 +33,11 @@ using namespace std;
 
 class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISceneNodeVisitor {
 
-
+    struct RayHit {
+        Ray r;
+        Vector<3,float> p;
+        //float t;
+    };
 
     class RayTracerRenderNode : public RenderNode {
         RayTracer* rt;
@@ -72,11 +76,20 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
     int traceNum;
     bool dirty;
 
-    Shape* NearestShape(Ray r, Vector<3,float>& p, bool debug= false);
+    Shape* NearestShape(Ray r, 
+                        Vector<3,float>& p, 
+                        bool debug= false,
+                        Hit side=HIT_OUT
+                        );
 
     Ray RayForPoint(unsigned int u, unsigned int v);
 
-    Vector<4,float> TraceRay(Ray r, int depth, bool debug=false);
+    Vector<4,float> TraceRay(const Ray r, 
+                             int depth, 
+                             bool debug=false, 
+                             Hit side = HIT_OUT,
+                             float rIndex=1.0, 
+                             list<RayHit>* rayCollection=NULL);
     void Trace();
     Timer timer;
     ISceneNode* root;
