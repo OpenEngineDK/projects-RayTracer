@@ -33,7 +33,7 @@
 #include <Display/SDLEnvironment.h>
 #include <Display/Viewport.h>
 #include <Display/HUD.h>
-#include <Display/Viewingvolume.h>
+#include <Display/ViewingVolume.h>
 #include <Renderers/OpenGL/Renderer.h>
 #include <Renderers/OpenGL/RenderingView.h>
 

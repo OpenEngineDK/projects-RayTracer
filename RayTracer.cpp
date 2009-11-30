@@ -214,7 +214,7 @@ For each pixel in image {
 
 Shape* RayTracer::NearestShape(Ray r, Vector<3,float>& point, bool debug, Hit side) {
 
-    float nearestT = 10000000000000000;
+    float nearestT = 1.0e100;
     Shape *nearestObj = 0;
     Vector<3,float> nearestPoint;
 
