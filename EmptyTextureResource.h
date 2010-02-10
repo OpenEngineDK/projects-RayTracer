@@ -24,23 +24,22 @@ typedef boost::shared_ptr<EmptyTextureResource> EmptyTextureResourcePtr;
 
         class EmptyTextureResource : public ITextureResource {
         private:
-            unsigned int width;
-            unsigned int height;
-            unsigned int depth;
-            unsigned char* data;
-            int id;
-            ColorFormat format;
 
             boost::weak_ptr<EmptyTextureResource> weak_this;
 
             EmptyTextureResource(unsigned int w, unsigned int h, unsigned int d) 
-                : width(w), height(h), depth(d), data(NULL), id(0) {
-                switch (depth){
-                case 8: format = LUMINANCE; break;
-                case 24: format = RGB; break;
-                case 32: format = RGBA; break;                    
+                : ITextureResource() {
+
+                this->width = w;
+                this->height = h;
+                this->channels = d/8;
+                
+                switch (d){
+                case 8: this->format = LUMINANCE; break;
+                case 24: this->format = RGB; break;
+                case 32: this->format = RGBA; break;                    
                 }
-                data = new unsigned char[width*height*depth/8];
+                this->data = new unsigned char[width*height*d/8];
             }
         public:
             static EmptyTextureResourcePtr Create(unsigned int w,
@@ -51,16 +50,9 @@ typedef boost::shared_ptr<EmptyTextureResource> EmptyTextureResourcePtr;
                 return ptr;
             }
             
-            ~EmptyTextureResource() { exit(-1);  delete data; }
+            ~EmptyTextureResource() { exit(-1);  delete[] data; }
             void Load() {}
             void Unload() {} //delete data; }
-            int GetID() { return id; }
-            void SetID(int id) { this->id = id; }
-            unsigned int GetWidth() { return width; }
-            unsigned int GetHeight() { return height; }
-            unsigned int GetDepth() { return depth; }
-            unsigned char* GetData() { return data; }
-            ColorFormat GetColorFormat() { return format; }
 
             void RebindTexture() {
                 changedEvent.Notify(TextureChangedEventArg(EmptyTextureResourcePtr(weak_this)));
@@ -69,7 +61,7 @@ typedef boost::shared_ptr<EmptyTextureResource> EmptyTextureResourcePtr;
             unsigned char& operator()(const unsigned int x,
                                       const unsigned int y,
                                       const unsigned int component) {
-                return data[y*width*depth/8+x*depth/8+component];
+                return data[y*width*channels+x*channels+component];
             }
         };
 //    }
