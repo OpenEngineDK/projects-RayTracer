@@ -15,7 +15,7 @@
 #include <Renderers/IRenderingView.h>
 #include <Display/IViewingVolume.h>
 
-#include "EmptyTextureResource.h"
+#include <Resources/EmptyTextureResource.h>
 
 using namespace OpenEngine;
 using namespace OpenEngine::Resources;
@@ -31,7 +31,9 @@ using namespace std;
 
 
 
-class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISceneNodeVisitor {
+class RayTracer : public Thread 
+                , public IListener<Core::ProcessEventArg>
+                , public ISceneNodeVisitor {
 
     struct RayHit {
         Ray r;
@@ -46,7 +48,7 @@ class RayTracer : public Thread , public IListener<ProcessEventArg>, public ISce
 
         RayTracerRenderNode(RayTracer* rt) : rt(rt) {}
 
-        virtual void Apply(IRenderingView *renderingView);
+        virtual void Apply(RenderingEventArg arg, ISceneNodeVisitor& v);
     };
 
     RayTracerRenderNode *rnode;
@@ -115,7 +117,7 @@ public:
     RayTracer(EmptyTextureResourcePtr tex, IViewingVolume* vol, ISceneNode* root);
     void Run();
 
-    void Handle(ProcessEventArg arg);
+    void Handle(Core::ProcessEventArg arg);
 
     void VisitShapeNode(ShapeNode* node);
 

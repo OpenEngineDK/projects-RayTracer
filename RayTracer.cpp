@@ -54,11 +54,11 @@ RayTracer::RayTracer(EmptyTextureResourcePtr tex, IViewingVolume* vol, ISceneNod
     rnode = new RayTracerRenderNode(this);
 }
 
-void RayTracer::RayTracerRenderNode::Apply(IRenderingView *rv) {
-    IRenderer* rend = rv->GetRenderer();
+void RayTracer::RayTracerRenderNode::Apply(RenderingEventArg arg, ISceneNodeVisitor& vi) {
+    IRenderer& rend = arg.renderer;
 
     // draw the cam
-    rend->DrawPoint(rt->camPos, Vector<3,float>(0,0,1), 10);
+    rend.DrawPoint(rt->camPos, Vector<3,float>(0,0,1), 10);
 
     // Draw a ray
 
@@ -74,71 +74,8 @@ void RayTracer::RayTracerRenderNode::Apply(IRenderingView *rv) {
 
     list<RayHit> rays;
     rt->TraceRay(r,0,markDebug,HIT_OUT,1.0,&rays);
+  
 
-    
-
-    // Shape *nearestObj = rt->NearestShape(r, p, markDebug);
-    // if (nearestObj) {
-    //     int i=0;
-
-    //     Ray lastRay = r;
-
-
-    //     // for each ray, draw the ray to the light
-    //     for (vector<Light>::iterator itr2 = rt->lights.begin();
-    //          itr2 != rt->lights.end();
-    //          itr2++) {
-    //         rend->DrawLine(Line(lastRay.origin, itr2->pos ),
-    //                        Vector<3,float>(0,0,0),2);
-
-    //     }
-
-
-    //     Vector<3,float> colors[5];
-    //     colors[0] = Vector<3,float>(1,0,0);
-    //     colors[1] = Vector<3,float>(0,1,0);
-    //     colors[2] = Vector<3,float>(0,0,1);
-    //     colors[3] = Vector<3,float>(1,1,0);
-    //     colors[4] = Vector<3,float>(0,1,1);
-
-    //     Line l(r.origin, p);
-    //     rend->DrawLine(l,colors[i++%5],3);
-
-    //     while (nearestObj && i < 5) {
-
-    //         // second ray
-    //         Ray reflectionRay;
-    //         reflectionRay.origin = p;
-
-    //         Vector<3,float> normal = nearestObj->NormalAt(p);
-    //         Vector<3,float> d = r.direction;
-
-    //         reflectionRay.direction = d - 2 * (normal * d ) * normal;
-
-    //         rend->DrawLine(Line(p,p + normal*5.0),
-    //                        Vector<3,float>(1,0,1),
-    //                        2);
-
-    //         rend->DrawLine(Line(reflectionRay.origin,reflectionRay.origin + reflectionRay.direction*10),
-    //                        Vector<3,float>(.5),
-    //                        2);
-
-    //         nearestObj = rt->NearestShape(reflectionRay, p, markDebug);
-    //         if (nearestObj)
-    //             rend->DrawLine(Line(reflectionRay.origin, p),colors[i++%5],3);
-    //         lastRay = reflectionRay;
-    //         // for each ray, draw the ray to the light
-    //         for (vector<Light>::iterator itr2 = rt->lights.begin();
-    //              itr2 != rt->lights.end();
-    //              itr2++) {
-    //             rend->DrawLine(Line(lastRay.origin, itr2->pos ),
-    //                            Vector<3,float>(0,0,0),2);
-
-    //         }
-    //     }
-
-
-    // }
     rt->objectsLock.Unlock();
 
     Vector<3,float> colors[5];
@@ -156,9 +93,9 @@ void RayTracer::RayTracerRenderNode::Apply(IRenderingView *rv) {
         itr != rays.end();
         itr++) {
         RayHit h = *itr;
-        rend->DrawLine(Line(h.r.origin, h.p),
-                       colors[i++%5],
-                       3);
+        rend.DrawLine(Line(h.r.origin, h.p),
+                      colors[i++%5],
+                      3);
     }
 
     markDebug = false;
@@ -171,10 +108,9 @@ void RayTracer::VisitShapeNode(ShapeNode* node) {
     objects.push_back(o);
 }
 
-void RayTracer::Handle(ProcessEventArg arg) {
-
+void RayTracer::Handle(Core::ProcessEventArg arg) {
+   
     if (dirty && timer.GetElapsedIntervals(100000)) {
-
         timer.Reset();
         texture->RebindTexture();
         dirty = false;
@@ -280,8 +216,9 @@ Vector<4,float> RayTracer::TraceRay(const Ray r, int depth, bool debug, Hit side
         RayHit h;
         h.r = r;
         h.p = (nearestObj)?nearestPoint:(r.origin + r.direction*10);
-               
-        rayCollection->push_back(h);
+        
+        if (nearestObj)
+            rayCollection->push_back(h);
         if (debug)
             logger.info << "added ray " << r << logger.end;
     }
@@ -383,7 +320,9 @@ Vector<4,float> RayTracer::TraceRay(const Ray r, int depth, bool debug, Hit side
 
         reflectionRay.AddEps();
 
-        Vector<4,float> recurseColor = TraceRay(reflectionRay,depth+1,debug,side,rIndex,rayCollection);
+        Vector<4,float> recurseColor = TraceRay(reflectionRay,depth+1,
+                                                debug,side,
+                                                rIndex,rayCollection);
         float reflection = nearestObj->reflection;
 
         if (debug)
@@ -513,6 +452,8 @@ void RayTracer::Trace() {
     _tmpOrigo = Vector<3,float>(_tmpIV(3,0), // iv is not transposed!
                                 _tmpIV(3,1),
                                 _tmpIV(3,2));
+
+    logger.info << _tmpProj << logger.end;
 
     if (markDebug) {
         Ray top = RayForPoint(41,41);

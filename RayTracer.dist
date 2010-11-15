@@ -13,6 +13,7 @@ darcs-dev /projects/RayTracer fh.daimi.au.dk:/users/cgd/code/projects/RayTracer
 
 # required extensions
 darcs /extensions/SetupHelpers           http://openengine.dk/code/extensions/SetupHelpers
+darcs /extensions/GenericHandlers           http://openengine.dk/code/extensions/GenericHandlers
 darcs /extensions/HUD                    http://openengine.dk/code/extensions/HUD
 darcs /extensions/SDL                    http://openengine.dk/code/extensions/SDL
 darcs /extensions/SDLFont                http://openengine.dk/code/extensions/SDLFont

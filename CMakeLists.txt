@@ -37,4 +37,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
   Extensions_Qt
   Extensions_OpenGLSelection
   Extensions_SDLFont
+#  Extensions_OpenCL
+  Extensions_GenericHandlers
 )

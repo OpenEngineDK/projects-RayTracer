@@ -6,7 +6,7 @@
 using namespace OpenEngine::Devices;
 
 class KeyRepeater : public IListener<KeyboardEventArg>, 
-                    public IListener<ProcessEventArg> {
+                    public IListener<Core::ProcessEventArg> {
     
     struct DK {
         Key sym;        
@@ -28,7 +28,7 @@ public:
 
     }
 
-    void Handle(ProcessEventArg arg) {
+    void Handle(Core::ProcessEventArg arg) {
         for (map<DK,Timer>::iterator itr = downKeys.begin();
              itr != downKeys.end();
              itr++) {
